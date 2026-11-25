@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GST Automation</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><h1>GST Automation</h1><span id="seller"></span></header>
+<main>
+  <section class="card">
+    <h2>New Invoice</h2>
+    <div class="grid">
+      <label>Invoice No<input id="invoice_no"></label>
+      <label>Date<input id="date" type="date"></label>
+      <label>Customer Name<input id="customer_name"></label>
+      <label>Customer GSTIN<input id="customer_gstin" placeholder="optional" maxlength="15"></label>
+      <label>Place of Supply<select id="pos"></select></label>
+    </div>
+    <table id="items"><thead><tr><th>Description</th><th>HSN</th><th>Qty</th><th>Rate</th><th>GST %</th><th>Taxable</th><th></th></tr></thead><tbody></tbody></table>
+    <button class="sec" id="addRow">+ Add item</button>
+    <div id="preview" class="preview"></div>
+    <button id="save">Save Invoice</button> <span id="msg"></span>
+  </section>
+
+  <section class="card">
+    <h2>Bulk Upload &amp; Export</h2>
+    <input type="file" id="csv" accept=".csv">
+    <button class="sec" id="upload">Upload CSV</button>
+    <a href="/api/export/gstr1" class="btn">Download GSTR-1 CSV</a>
+    <div id="uploadMsg"></div>
+  </section>
+
+  <section class="card"><h2>Monthly Summary</h2><table id="summary"></table></section>
+  <section class="card"><h2>Invoices</h2><table id="invoices"></table></section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
