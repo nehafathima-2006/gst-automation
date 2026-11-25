@@ -43,20 +43,20 @@ def save_invoice(inv: InvoiceIn):
         raise HTTPException(400, str(e))
     with db.conn() as c:
         try:
-            cur = c.execute(
+            new_id = db.insert_returning_id(c,
                 "INSERT INTO invoices(invoice_no,date,customer_name,customer_gstin,place_of_supply,"
                 "taxable,cgst,sgst,igst,total) VALUES(?,?,?,?,?,?,?,?,?,?)",
                 (inv.invoice_no, inv.date, inv.customer_name, gstin, inv.place_of_supply,
                  tot["taxable"], tot["cgst"], tot["sgst"], tot["igst"], tot["total"]))
-        except sqlite3.IntegrityError:
+        except db.IntegrityError:
             raise HTTPException(409, f"Invoice {inv.invoice_no} already exists")
         for r in rows:
             c.execute(
                 "INSERT INTO items(invoice_id,description,hsn,qty,rate,gst_rate,taxable,cgst,sgst,igst) "
                 "VALUES(?,?,?,?,?,?,?,?,?,?)",
-                (cur.lastrowid, r["description"], r["hsn"], r["qty"], r["rate"], r["gst_rate"],
+                (new_id, r["description"], r["hsn"], r["qty"], r["rate"], r["gst_rate"],
                  r["taxable"], r["cgst"], r["sgst"], r["igst"]))
-    return {"id": cur.lastrowid, **tot}
+    return {"id": new_id, **tot}
 
 
 @app.post("/api/invoices")
@@ -90,10 +90,11 @@ def delete_invoice(inv_id: int):
 @app.get("/api/summary")
 def summary():
     with db.conn() as c:
-        return [dict(r) for r in c.execute(
-            "SELECT substr(date,1,7) AS month, COUNT(*) AS invoices, ROUND(SUM(taxable),2) AS taxable,"
-            "ROUND(SUM(cgst),2) AS cgst, ROUND(SUM(sgst),2) AS sgst, ROUND(SUM(igst),2) AS igst,"
-            "ROUND(SUM(total),2) AS total FROM invoices GROUP BY month ORDER BY month DESC")]
+        rows = c.execute(
+            "SELECT substr(date,1,7) AS month, COUNT(*) AS invoices, SUM(taxable) AS taxable,"
+            "SUM(cgst) AS cgst, SUM(sgst) AS sgst, SUM(igst) AS igst,"
+            "SUM(total) AS total FROM invoices GROUP BY month ORDER BY month DESC").fetchall()
+    return [{k: (round(v, 2) if isinstance(v, float) else v) for k, v in dict(r).items()} for r in rows]
 
 
 @app.post("/api/upload")
